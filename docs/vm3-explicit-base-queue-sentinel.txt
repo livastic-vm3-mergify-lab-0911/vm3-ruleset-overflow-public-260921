@@ -1,0 +1,1 @@
+VM3 low-priv fork proof: documented explicit base input must not disable queue-only validation
