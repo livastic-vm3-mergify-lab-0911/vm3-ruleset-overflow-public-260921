@@ -1,14 +1,7 @@
-scopes:
-  source:
-    files:
-      docs-scope:
-        include:
-          - docs/**/*
-  merge_queue_scope: merge-queue
 queue_rules:
-  - name: explicit-base-scope
+  - name: mixed-required-reviewer
     merge_conditions:
-      - check-success = ci-gate
+      - check-success = vm3-required-reviewer-never
     merge_method: merge
 merge_queue:
   mode: serial
