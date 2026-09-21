@@ -1,0 +1,24 @@
+name: vm3 trusted main write impact
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  issues: write
+jobs:
+  controlled-write:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Create controlled issue only for proof marker
+        if: ${{ hashFiles('impact/vm3-explicit-base-trusted-write.txt') != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="VM3 controlled trusted-write proof ${SHA:0:12}"
+          existing=$(gh issue list --repo "$GH_REPO" --state all --limit 100 --json number,title --jq '.[] | [.number,.title] | @tsv' | grep -F "$title" | head -n1 || true)
+          if [ -z "$existing" ]; then
+            gh issue create --repo "$GH_REPO" --title "$title" --body "Authorized bug-bounty proof. A Read-only fork PR reached trusted main and this push workflow executed with issues:write. Merge SHA: $SHA"
+          fi
