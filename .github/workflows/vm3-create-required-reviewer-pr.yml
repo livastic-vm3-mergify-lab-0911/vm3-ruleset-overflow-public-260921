@@ -1,0 +1,29 @@
+name: vm3 create bot-authored required-reviewer PR
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Create bot-authored PR fixture
+        run: |
+          set -euo pipefail
+          branch="vm3-required-reviewer-bot-${GITHUB_RUN_ID}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$branch"
+          mkdir -p protected
+          printf '%s\n' "VM3 required reviewer mixed-ruleset bot fixture $GITHUB_RUN_ID" > protected/required-reviewer.txt
+          git add protected/required-reviewer.txt
+          git commit -m 'Add required reviewer mixed-ruleset bot fixture'
+          git push origin "$branch"
+          gh pr create --repo "$GH_REPO" --base main --head "$branch" \
+            --title 'VM3 mixed count1 + count0 required-team discriminator' \
+            --body 'Authorized disposable bug-bounty fixture. Authored by github-actions[bot] so two human test accounts can independently provide generic and required-team approvals.'
