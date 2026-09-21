@@ -1,0 +1,1 @@
+Trusted-write impact chain through Mergify Queue explicit-base scope bug
