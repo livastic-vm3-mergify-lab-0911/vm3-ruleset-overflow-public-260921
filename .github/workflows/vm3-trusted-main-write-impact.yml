@@ -1,24 +1,10 @@
-name: vm3 trusted main write impact
+name: vm3 trusted main write impact (disabled after proof)
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
-  issues: write
 jobs:
-  controlled-write:
+  archived-proof:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - name: Create controlled issue only for proof marker2
-        if: ${{ hashFiles('impact/vm3-explicit-base-trusted-write-2.txt') != '' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-        run: |
-          title="VM3 controlled trusted-write proof ${SHA:0:12}"
-          existing=$(gh issue list --repo "$GH_REPO" --state all --limit 100 --json number,title --jq '.[] | [.number,.title] | @tsv' | grep -F "$title" | head -n1 || true)
-          if [ -z "$existing" ]; then
-            gh issue create --repo "$GH_REPO" --title "$title" --body "Authorized bug-bounty proof. A Read-only fork PR reached trusted main and this trusted push workflow executed with issues:write. Merge SHA: $SHA"
-          fi
+      - run: echo 'Trusted-write impact proof completed on 2026-09-21; automatic trigger disabled.'
