@@ -1,2 +1,19 @@
+commands_restrictions:
+  queue:
+    conditions:
+      - sender = livastic-vm3-primary-tmp-260920
+scopes:
+  source:
+    files:
+      docs-scope:
+        include:
+          - docs/**/*
+  merge_queue_scope: merge-queue
 queue_rules:
-  - name: default
+  - name: explicit-base-scope
+    merge_conditions:
+      - check-success = ci-gate
+    merge_method: merge
+merge_queue:
+  mode: serial
+  max_parallel_checks: 1
