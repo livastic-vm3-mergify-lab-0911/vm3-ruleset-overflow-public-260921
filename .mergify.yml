@@ -1,8 +1,14 @@
+scopes:
+  source:
+    manual:
+  merge_queue_scope: merge-queue
+
 queue_rules:
-  - name: mixed-required-reviewer
+  - name: vm3-scopes-upload-special-261004
     merge_conditions:
-      - check-success = vm3-required-reviewer-never
+      - check-success = ci-gate
     merge_method: merge
+
 merge_queue:
   mode: serial
   max_parallel_checks: 1
