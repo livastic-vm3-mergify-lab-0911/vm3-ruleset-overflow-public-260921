@@ -1,0 +1,71 @@
+name: VM3 scopes-upload special-scope 261004
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  detect-scopes:
+    runs-on: ubuntu-latest
+    outputs:
+      merge-queue: ${{ steps.normalize.outputs.merge_queue }}
+    steps:
+      - name: Checkout same-repo synthetic head
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Treatment - upload manual scopes
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        id: scopes
+        uses: Mergifyio/gha-mergify-ci@v26
+        with:
+          action: scopes-upload
+          token: ${{ github.token }}
+          scopes: docs-scope
+          mergify_cli_version: 2026.10.1
+
+      - name: Normalize special scope output
+        id: normalize
+        shell: bash
+        env:
+          SAME_REPO: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          RAW_SCOPES: ${{ steps.scopes.outputs.scopes }}
+        run: |
+          set -euo pipefail
+          echo "VM3_SAME_REPO=$SAME_REPO"
+          echo "VM3_RAW_SCOPES=${RAW_SCOPES:-<empty>}"
+          value=false
+          if [ "$SAME_REPO" = "true" ] && [ -n "${RAW_SCOPES:-}" ]; then
+            if jq -e '.["merge-queue"] == "true"' <<<"$RAW_SCOPES" >/dev/null; then
+              value=true
+            fi
+          fi
+          echo "merge_queue=$value" >> "$GITHUB_OUTPUT"
+          echo "VM3_MERGE_QUEUE_SCOPE=$value"
+
+  vm3-queue-only-validation:
+    needs: detect-scopes
+    if: ${{ needs.detect-scopes.outputs.merge-queue == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deterministic queue-only blocker
+        run: |
+          echo "VM3_QUEUE_ONLY_VALIDATION_EXECUTED=yes"
+          exit 1
+
+  ci-gate:
+    if: ${{ always() }}
+    needs:
+      - detect-scopes
+      - vm3-queue-only-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: First-party aggregate gate
+        uses: Mergifyio/gha-mergify-ci@v26
+        with:
+          action: wait-jobs
+          jobs: ${{ toJSON(needs) }}
